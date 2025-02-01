@@ -18,8 +18,33 @@ module.exports = function (app) {
       } catch (error) {
         response.status(500).json({ error: "An error occurred while creating the thread" });
       }
-    });
-
+    })
+    .get(async function ({ params }, response) {
+      try {
+        const board = await Board.findOne({ name: params.board }).populate({
+          path: "threads",
+          options: {
+            sort: { bumped_on: -1 },
+            limit: 10,
+            populate: {
+              path: "replies",
+              select: "-reported -delete_password",
+              options: {
+                sort: { created_on: -1 },
+                limit: 3
+              }
+            }
+          }
+        });
+        if (!board) {
+          response.status(404).json({ error: "The requested board does not exist." });
+        } else {
+          response.json({ threads: board.threads });
+        }
+      } catch (error) {
+        response.status(500).json({ error: "An error occurred while fetching the threads" });
+      }
+    })
   app.route("/api/replies/:board")
     .post(async function ({ params, body }, response) {
       // Implement the logic for handling replies here
