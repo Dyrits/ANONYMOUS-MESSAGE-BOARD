@@ -109,3 +109,10 @@ describe("Functional Tests", function () {
       });
   });
 });
+
+// Release the real server and database connections after the suite.
+after(async function () {
+  if (process.env.NODE_ENV === "test") return; // Embedded FCC runner keeps the app available.
+  await require("mongoose").disconnect();
+  await new Promise((resolve, reject) => server.locals.listener.close(error => error ? reject(error) : resolve()));
+});
